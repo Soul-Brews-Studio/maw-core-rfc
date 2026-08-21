@@ -14,7 +14,7 @@ Reduce `maw-rs` to a trusted orchestration kernel centered on five operator capa
 2. attach to it (`attach`/`a`);
 3. create or enter isolated work (`work`);
 4. send it a message (`hey`); and
-5. inspect bounded output (`peek`).
+5. inspect pane output (`peek`).
 
 The native binary also retains the plugin runtime, artifact verification, capability enforcement,
 transport authentication, and bounded platform adapters needed to implement those capabilities.
@@ -81,8 +81,12 @@ and its canary also omits `work`.
 - Retain typed local/remote target resolution and the binary attach fast path.
 - Preserve picker, sleeping wake plan, remote SSH plan, `--print`, `--readonly|--read-only|-r`,
   `--plan-json|--dry-run`, `--yes|-y`, `--ssh-alias`, repeated `--alive`, and exact errors.
-- Freeze `main.rs::maybe_exec_attach`: only an interactive, unambiguous live target uses the fast
-  path; failure falls through so the dispatcher retains its unreachable diagnostic.
+- Freeze `main.rs::maybe_exec_attach`: only an interactive, unambiguous live target may attach fast;
+  list failure falls through. **Observed conflict:** top-level `attach/a` then collapses list failure
+  to an empty set, while nested `maw tmux attach` reports unreachable. Resolution needs RED + approval.
+- **Observed ordering debt:** `main_code_async` currently constructs the tmux client and lists
+  sessions before `maybe_exec_attach_with` checks the verb, TTY, or bypass flags, so even unrelated
+  commands touch `tmux` from `PATH`. A verb/eligibility-before-I/O correction needs RED + approval.
 - Never permit a plugin to shadow or intercept attach.
 
 ### `maw work`
@@ -109,8 +113,13 @@ and its canary also omits `work`.
   overview/target resolution, canonical/raw fallback, duplicates, blank capture, unreachable/missing
   distinctions, and argv-vector injection safety.
 - Plugins may request reviewed typed observations; they do not receive unrestricted capture access.
-- Native `peek` may return bounded pane text; plugin observation returns only declared boolean marker
-  results and never captured text.
+- **Observed debts:** any positive `u32` line count is accepted and `--history` captures full history;
+  remote capture ignores parsed lines/history; response/target bytes have no finite cap.
+- Peer/local collision guidance advertises unsupported `--peer`; `./...` forces local but no working
+  forced-remote escape exists. Local-list failure maps to empty and may choose remote without proving
+  absence. Each correction requires a frozen RED and approval.
+- Native `peek` may return requested pane text; plugin observation returns only declared boolean
+  marker results and never captured text.
 
 ### Native infrastructure
 
