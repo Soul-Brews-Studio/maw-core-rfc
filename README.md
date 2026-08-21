@@ -1,1 +1,9 @@
 # maw-core-rfc
+
+Public design record for a small native maw kernel, its privileged tmux substrate, the separate
+serve/God gateway, and external workflow plugins.
+
+- [RFC-0001: Minimal maw Native Kernel](docs/RFC-0001-minimal-maw-kernel.md)
+- RFC-0002: Full maw tmux Substrate *(draft in progress)*
+- RFC-0003: maw Serve/God Gateway *(draft in progress)*
+- [Discussion and review](https://github.com/Soul-Brews-Studio/maw-core-rfc/issues/1)
