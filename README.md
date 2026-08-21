@@ -15,3 +15,7 @@ serve/God gateway, and external workflow plugins.
 - [`maw work`](docs/contracts/work.md)
 - [`maw hey`](docs/contracts/hey.md)
 - [`maw peek`](docs/contracts/peek.md)
+
+## Source inventories
+
+- [Serve fixed-route and policy ledger](docs/inventories/serve-route-policy.md)
