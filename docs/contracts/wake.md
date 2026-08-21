@@ -72,6 +72,9 @@ as an error value.
 3. The peer path loads signed federation configuration, lists local sessions, resolves local/self/
    peer/collision, and fails closed on route errors. A peer request uses the native authenticated
    transport; a plugin cannot select an arbitrary URL, token, or sender identity.
+   **Observed defect:** the peer parser accepts only target, `--task`, and `--from`; `--peer` first
+   selects this path and is then rejected. A local `session:window` also selects peer routing unless
+   `--dry-run`. These contradictions require RED fixtures before correction.
 4. The local path lists sessions. List/all use the regular listing; creation uses the cold-start-aware
    listing. Listing failure exits `1` before worktree/tmux mutation.
 5. Picker/fleet expansion happens before single-target resolution.
@@ -107,20 +110,23 @@ Configuration is merged **in the resolved directory**, so repo/worktree layers m
   engines receive the historical naive ` resume` plus a warning.
 - The in-pane line is bare, not `exec`: `MAW_SESSION_WINDOW=<window> <engine command>`. The shell is
   expected to survive engine exit.
+- Launch-confirmation timing reads env, then config from the **invoking cwd**, not the resolved
+  target directory. This is a frozen inconsistency, not target-layer precedence.
 
 ## Read-only and mutation modes
 
 | Mode | Required behavior |
 |---|---|
 | `--list` | render inventory only; no repo/worktree/tmux mutation |
-| `--all` | render/dispatch the frozen all-plan behavior; preserve `--yes` and dry-run rows |
+| `--all` | render the all-plan only; current alpha never wakes any target |
 | `--pick` | use the frozen picker/fleet behavior before target mutation |
-| `--dry-run` | resolve and render; no worktree, session, pane, fleet, or hook mutation |
+| `--dry-run` | render without worktree/tmux/fleet/hook mutation, but current alpha may `ghq get` a missing repo and writes the resolve phase audit |
 | live registry attach shortcut | with exact target/session, attach, no task/worktree, select active/first window only |
 | normal | resolve, optionally prepare worktree, then apply |
 
 Current `--split` parsing is effectively inert in this native flow. Changing it requires a RED test
-and explicit behavior approval.
+and explicit behavior approval. `issue`, `pr`, `snapshot`, `from_snapshot`, `main`, `solo`, `bud`,
+and `wait` are also parsed but behaviorally dead on the local path; `all_local` is only rendered.
 
 ## Mutation sequence and truthful partials
 
@@ -136,19 +142,23 @@ The observable order is normative unless separately approved:
 8. wait for shell readiness, submit the engine line, and confirm launch/trust-prompt state;
 9. optionally select/attach, joining a deferred sender before returning;
 10. upsert fleet state;
-11. run post-wake hooks.
+11. run config hooks then repeated CLI `--on-ready` hooks serially via native `sh -c`.
 
 Failures after a confirmed earlier mutation report failure without claiming rollback. A non-idempotent
 ambiguous pane/worktree result MUST NOT be retried automatically.
+Current hook output and failures are discarded; unreadable pane command/capture can fail open; a
+fleet-upsert failure reports error after tmux mutation. Preserve these rows until separately approved.
 
 ## Output and exit contract
 
 - Success is exit `0`; parse, resolution, listing, path, worktree, tmux, confirmation, and route
   failures are exit `1` with `wake:` diagnostics on stderr unless a frozen picker/fleet row says
   otherwise.
+- Peer route/refusal errors may use exit `2`. `wake` has no JSON mode.
 - Dry-run/list/all rendering, ANSI warning/fuzzy/worktree lines, phase-audit visibility, and silence
   on the live attach shortcut are compatibility bytes and need golden fixtures.
-- Phase timing is append-only audit state; slow pre-attach phases may render diagnostics. Audit write
+- Phase timing is append-only audit state; slow pre-attach phases may render diagnostics. Async wake
+  bypasses the generic dispatcher audit; remote wake writes no local wake-phase rows. Audit write
   ordering relative to refusal is part of the provider amendment below.
 - “Submitted and confirmed” means pane composer/launch confirmation, not end-to-end agent work.
 
