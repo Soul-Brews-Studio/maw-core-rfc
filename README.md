@@ -7,3 +7,7 @@ serve/God gateway, and external workflow plugins.
 - [RFC-0002: Full maw tmux Substrate](docs/RFC-0002-maw-tmux-substrate.md)
 - [RFC-0003: maw Serve/God Gateway](docs/RFC-0003-maw-serve-gateway.md)
 - [Discussion and review](https://github.com/Soul-Brews-Studio/maw-core-rfc/issues/1)
+
+## Detailed native command contracts
+
+- [`maw wake`](docs/contracts/wake.md)
