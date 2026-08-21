@@ -55,7 +55,7 @@ limit). All rows also inherit the Origin policy and, where applicable, the class
 | 3 | `GET /api/feed` | A | R | Process feed retains at most 200 events. |
 | 4 | `POST /api/feed` | F | M | -- body; marks agent status and acknowledges, does not persist the body. |
 | 5 | `GET /api/sessions` | P | R | 64 KiB auth read; U tmux pane/session output; tmux failure is 503. |
-| 6 | `GET /api/capture` | P | R | 64 KiB auth read; U full pane capture; tmux failure is 400. |
+| 6 | `GET /api/capture` | P | R | 64 KiB auth read; fixed 80-line capture, U response bytes; tmux failure is 400. |
 | 7 | `POST /api/probe` | F | Stub | -- body; fixed `sessions: []` success response. |
 | 8 | `POST /api/wake` | F | M | -- body/target/task; invokes the native wake executor. |
 | 9 | `POST /api/pane-keys` | F | Stub | -- body; returns `ok` without a pane-key action. |
@@ -103,7 +103,7 @@ limit). All rows also inherit the Origin policy and, where applicable, the class
 | 46 | `POST /api/asks` | A | M | 64 KiB valid JSON; direct non-atomic file replacement. |
 | 47 | `GET /api/pin-info` | A | R | Fixed `{length,enabled}` projection; pin value is not returned. |
 | 48 | `GET /api/identity` | A | R | Reads identity/peer-key; returns 409 when unpaired and exposes public key. |
-| 49 | `GET /info` | O | R | Fixed public node/oracle/version/endpoints identity projection. |
+| 49 | `GET /info` | O | R | Fixed public node/oracle/user/version/capabilities identity projection. |
 | 50 | `POST /api/pair/generate` | A | M | -- JSON; U RAM code-store cardinality; no federation token in response. |
 | 51 | `GET /api/pair/status/:code` | A | R | RAM-only pairing state; no persistence across restart. |
 | 52 | `POST /api/pair/:code` | A | M | -- JSON; consumes RAM state and may return the federation token. |
