@@ -13,3 +13,4 @@ serve/God gateway, and external workflow plugins.
 - [`maw wake`](docs/contracts/wake.md)
 - [`maw attach` / `maw a`](docs/contracts/attach-a.md)
 - [`maw work`](docs/contracts/work.md)
+- [`maw hey`](docs/contracts/hey.md)
