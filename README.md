@@ -18,6 +18,7 @@ serve/God gateway, and external workflow plugins.
 
 ## Source inventories
 
+- [Complete native dispatcher route ledger](docs/inventories/dispatcher-route-ledger-index.md) — 200 source spellings, current owner, nested routers, and blocking dispositions
 - [tmux route and ownership ledger](docs/inventories/tmux-route-ledger.md)
 - [tmux compiled authority and guest-boundary ledger](docs/inventories/tmux-authority-ledger.md)
 - [Serve fixed-route and policy ledger](docs/inventories/serve-route-policy.md)
