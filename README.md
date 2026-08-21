@@ -18,5 +18,6 @@ serve/God gateway, and external workflow plugins.
 
 ## Source inventories
 
+- [tmux route and ownership ledger](docs/inventories/tmux-route-ledger.md)
 - [Serve fixed-route and policy ledger](docs/inventories/serve-route-policy.md)
 - [Serve WebSocket, fallback, and runtime-plugin ledger](docs/inventories/serve-ws-plugin-routes.md)
