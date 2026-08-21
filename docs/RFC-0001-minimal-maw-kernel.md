@@ -3,7 +3,8 @@
 - **Status:** Proposed
 - **Tracking:** [maw-core-rfc#1](https://github.com/Soul-Brews-Studio/maw-core-rfc/issues/1)
 - **Implementation program:** [maw-rs#963](https://github.com/Soul-Brews-Studio/maw-rs/issues/963)
-- **Source baseline:** `Soul-Brews-Studio/maw-rs` `alpha@775c709b`
+- **Source baseline:** `maw-rs alpha@775c709b67add2a69c7c2dd3ecee18bbb5fcdb6e`
+- **Source tree:** `2e66f58be215d5151e8326a43a9b034b96f6be11`
 
 ## Summary
 
@@ -20,7 +21,8 @@ transport authentication, and bounded platform adapters needed to implement thos
 Optional workflow UX and product/vendor policy move to source-proven external plugins.
 
 This repository records the proposal. It does not duplicate the implementation task graph already
-reviewed in `maw-rs#963`.
+reviewed in `maw-rs#963`. Current-state claims are source-derived; the extraction and target
+multi-route ABI remain planning work, not code already shipped on `alpha`.
 
 ## Why
 
@@ -34,14 +36,15 @@ unless an individually frozen and approved correction says otherwise.
 
 ## Current source map
 
-The map below was rechecked with Serena's Rust symbol index.
+The source snapshot is the authority; Serena's Rust index was used only to discover and cross-check
+the repo-relative symbols below.
 
 | Surface | Current native owner | Target |
 |---|---|---|
 | dispatch/plugin fallback | `core_impl/dispatcher.rs` | native |
 | `wake` | `core_impl/wake.rs` | native |
 | `attach` / `a` | `core_impl/attach.rs` | native |
-| `work` and worktree/session orchestration | `core_impl/workon.rs`, workspace/worktree modules | native |
+| `work` and worktree/session orchestration | `core_impl/workspace_scaffold_commands.rs::work_run_command`, `core_impl/workon.rs` | native |
 | `hey` | `core_impl/send_federation.rs` | native |
 | `peek` | `core_impl/tmux_peek.rs` | native |
 | `bring` / `b` | `core_impl/session_list_plan.rs::run_bring_plan` | plugin |
@@ -51,45 +54,63 @@ The map below was rechecked with Serena's Rust symbol index.
 | `more` / `wave` Codex workflows | `core_impl/more.rs`, More/Wave modules | plugin |
 
 The audited workspace contains 690 Rust files: 472 in `maw-cli`, including 229 `core_impl` files;
-61 in `maw-plugin-manifest`; 63 in `maw-tmux`; and 295 Rust test files.
+61 in `maw-plugin-manifest`; and 63 in `maw-tmux`. Of those, 295 are under test directories.
 
 The merged #963 Spec Kit protects `wake`, `attach/a`, `hey`, `peek`, and `serve`, but does not yet
-name `work` as a first-class retained invariant. Implementation therefore requires a reviewed
-upstream amendment that adds `work` to the constitution, ownership contract, requirements,
-regression matrix, task graph, quickstart, and exact-candidate canary before any extraction cutover.
+name `work` as a first-class retained invariant or separate serve from the minimal public inventory.
+Implementation requires a reviewed upstream amendment to its constitution, ADR, ownership contract,
+requirements, regressions, task graph, quickstart, and canary. Open PR #967 is not merged authority
+and its canary also omits `work`.
 
 ## Native kernel contract
 
 ### `maw wake`
 
-- Resolve identity, repository/worktree, engine, prompt, session, and window through native policy.
+- Preserve picker/target selection, local/peer routing, list/all/dry-run, worktree plan/create/reuse,
+  phase audit, session/window reuse/create, shell readiness, engine confirmation, attach/select,
+  fleet registration, and hooks.
 - Retain generic provider invocation but move vendor-specific planning behind accepted providers.
-- Refuse a missing or invalid explicitly selected provider before workflow mutation.
+- Invoke a selected provider exactly once in a fresh plan-only instance before phase, filesystem,
+  worktree, or tmux mutation; revalidate its target/config snapshot before execution.
+- Refuse a missing, invalid, or refused explicitly selected provider before workflow mutation.
 - Preserve non-Codex behavior when optional plugins are absent.
+- Preserve currently inert `--split` behavior unless a separate RED and human approval changes it.
 
 ### `maw attach` / `maw a`
 
 - Retain typed local/remote target resolution and the binary attach fast path.
-- Preserve picker, plan, readonly, port, and error behavior.
+- Preserve picker, sleeping wake plan, remote SSH plan, `--print`, `--readonly|--read-only|-r`,
+  `--plan-json|--dry-run`, `--yes|-y`, `--ssh-alias`, repeated `--alive`, and exact errors.
+- Freeze `main.rs::maybe_exec_attach`: only an interactive, unambiguous live target uses the fast
+  path; failure falls through so the dispatcher retains its unreachable diagnostic.
 - Never permit a plugin to shadow or intercept attach.
 
 ### `maw work`
 
-- Retain trusted repository discovery, branch/worktree creation, collision handling, session/window
-  creation, and attachment.
+- Preserve grammar `repo [task]`, `--wt`, `--fresh`, `--name`, `-e|--engine`, `--layout`, repo/ghq
+  forms, create/reuse/collision, session/window, fleet, engine, attach, output, and error behavior.
 - Expose only opaque, validated worktree references to plugins that need lifecycle composition.
 - Keep raw Git, filesystem, and tmux operations native.
+- Keep public `workon` until a separate frozen disposition is approved: `work` delegates to it and
+  `wake` shares helpers, so shared-source deletion cannot silently remove it.
 
 ### `maw hey`
 
-- Retain local/federated routing, authentication, audit, explicit delivery outcomes, and refusal.
+- Preserve positional/file/stdin exclusivity, picker/forced-peer routing, local-peer collision
+  refusal, local/inbox/peer delivery, signatures/tokens, audit, trust/approval, dry-run ordering,
+  and empty-body/implicit-self refusal.
 - State-backed Team mailbox policy may be external, but transport authority stays native.
 - Never claim delivery across an ambiguous or unconfirmed boundary.
+- Co-dispatched `send`, `health`, `reply`, and `rp` require independent dispositions.
 
 ### `maw peek`
 
-- Retain bounded target validation, pane capture, window overview, truncation, and failure behavior.
+- Preserve default 30 lines, history/line validation, one-target maximum, help versus argument exits,
+  overview/target resolution, canonical/raw fallback, duplicates, blank capture, unreachable/missing
+  distinctions, and argv-vector injection safety.
 - Plugins may request reviewed typed observations; they do not receive unrestricted capture access.
+- Native `peek` may return bounded pane text; plugin observation returns only declared boolean marker
+  results and never captured text.
 
 ### Native infrastructure
 
@@ -107,9 +128,9 @@ The external `Soul-Brews-Studio/maw-plugins` repository owns:
 - Codex account presentation, `more`, `wave`, health/profile/resume policy, and provider planning; and
 - future optional workflows that do not establish host authority.
 
-A plugin may own parsing, rendering, selection, and workflow policy. It cannot mint host authority.
-Every effect consumes an intent-bound opaque reference issued from reviewed operator input or
-host-owned state.
+A plugin may own parsing, rendering, selection, and workflow policy. Inert validated plan/render
+data may remain plain data, but every authority-bearing effect parameter consumes an intent-bound
+opaque reference issued from reviewed operator input or host-owned state.
 
 ## Security requirements
 
@@ -117,8 +138,8 @@ host-owned state.
    filesystem paths, unrestricted tmux, arbitrary Git roots, or a generic CLI escape hatch.
 2. Each effectful invocation receives the intersection of static manifest capabilities and a
    hash-covered route/subcommand intent with finite call budgets.
-3. Targets, payloads, engines, workspaces, members, content, Git refs, and consent/trust outcomes are
-   host-issued references, not trusted guest strings.
+3. Authority-bearing targets, payloads, engines, workspaces, members, content, Git refs, and
+   consent/trust outcomes are host-issued references, not trusted guest strings.
 4. Non-idempotent actions have explicit confirmed/failed/ambiguous outcomes and cannot be replayed.
 5. Guest-writable state cannot launder later execution authority; authority-bearing changes use
    closed semantic native mutations and durable provenance records.
@@ -135,6 +156,11 @@ host-owned state.
   prove it against the preceding host, then enable or tighten the host.
 - Never leave both native and plugin owners reachable after cutover.
 - Help, completions, plugin list, doctor, registry, and issue ledger must agree on ownership.
+- Maintain an exhaustive route ledger: every current dispatcher entry is classified as one of the
+  five public commands, host administration, RFC-0002 tmux, RFC-0003 serve, external plugin,
+  compatibility alias, or approved removal. An unclassified route blocks completion.
+- Current alpha has legacy `cli.command` plus native-first fallback; planned route tables and
+  canonical `invokedCommand` are future ABI work and must follow client-first ordering.
 
 ## Artifact-first migration
 
@@ -169,16 +195,17 @@ The exact final trees are frozen before evidence collection. Before a CalVer alp
 
 - install the exact candidate and verify `maw --version` reports its commit;
 - exercise retained native commands and installed/missing/refused plugin paths;
-- run RFC-0003's browser-equivalent serve/God WebSocket canary independently; and
 - bind all results to the candidate tree, registry, and artifact hashes.
 
-An HTTP `101` or a bare `PASS` line is insufficient evidence. Evidence produced by changing the
-candidate after review does not prove the reviewed candidate.
+The RFC-0001 canary exercises exactly the five public commands. A combined product release may
+compose RFC-0002 and RFC-0003 evidence, but this RFC's acceptance never depends on serve. Promotion
+must map candidate SHA to tagged merge SHA and prove identical trees plus the installed version.
 
 ## Non-goals
 
 - Moving the plugin host, raw tmux adapter, transport authentication, or secrets into WASM.
 - Reimplementing `wake`, `attach/a`, `work`, `hey`, or `peek` in plugins.
+- Defining serve/God HTTP/WS behavior or the full public/raw tmux surface.
 - Creating a second implementation tracker that competes with `maw-rs#963`.
 - Bundling unrelated feature redesigns into extraction PRs.
 
