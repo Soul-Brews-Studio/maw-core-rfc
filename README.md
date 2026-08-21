@@ -11,3 +11,4 @@ serve/God gateway, and external workflow plugins.
 ## Detailed native command contracts
 
 - [`maw wake`](docs/contracts/wake.md)
+- [`maw attach` / `maw a`](docs/contracts/attach-a.md)
