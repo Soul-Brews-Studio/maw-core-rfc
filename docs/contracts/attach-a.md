@@ -43,8 +43,9 @@ The actual normal parser accepts exactly one positional target and:
 | `--help`, `-h` | usage on stdout, exit `0` |
 
 Missing target, extra positional, missing flag value, unknown flag, control-bearing/leading-dash
-unsafe target, SSH alias, or alive token fails before attach execution. Scalar flags are last-value
-wins; alive values form a sorted set.
+unsafe target, SSH alias, or alive token fails before attach execution. Parser failures exit `2`
+with usage; later validation failures exit `1` without usage. Scalar flags are last-value wins;
+alive values form a sorted set.
 
 The fast path accepts only canonical/alias + target + readonly spelling. Help, print, JSON/dry-run,
 non-TTY stdout, extra positional, unknown flags, ambiguous target, or missing target fall through to
@@ -87,6 +88,10 @@ Readonly takes precedence over inside-tmux switching. Preserve or explicitly adj
 A nonnumeric local `session:window` can be classified as remote before local resolution. This is a
 known ambiguity, not a supported forced-remote/local contract.
 
+When any `--alive` value is supplied it replaces, rather than augments, the probed inventory.
+Picker execution can bridge to native wake/fleet. The displayed Oracle wake row may include a
+resolved `--repo`, but current execution drops that disambiguating repo; preserve as a known defect.
+
 ## Execution versus rendering
 
 The normal handler passes `is_tty=false` to `decide_tmux_attach_action`. Therefore normal live local
@@ -100,7 +105,8 @@ only in the binary fast path. `--print` and `--plan-json|--dry-run` always rende
 | Print | `Run: tmux ...`, resolved row, detach hint | `0` |
 | Recover | missing-session message + `maw wake <target> --attach` | `1` |
 | explicit remote | Tier-3 dry-run + `maw-rs attach-ssh ...`, or JSON | `0` |
-| parse/validation/executor failure | diagnostic on stderr | `1` |
+| parser failure | diagnostic + usage on stderr | `2` |
+| validation/executor failure | diagnostic on stderr | `1` |
 
 Local JSON fields are `command`, `alias`, `target`, `session`, `action`, and `tmuxArgs`. Remote adds
 `tier`, `node`, `sessionName`, `sshAlias`, `yes`, and `attachSshArgs`. Current JSON always reports
@@ -108,7 +114,8 @@ Local JSON fields are `command`, `alias`, `target`, `session`, `action`, and `tm
 route identity is not passed to the handler. Preserve bytes until a separately approved correction.
 
 Remote text/JSON is a plan, not evidence that SSH or tmux attached. Current remote readonly is not
-represented in `attachSshArgs`; do not claim otherwise.
+represented in `attachSshArgs`; do not claim otherwise. With `--yes`, text appends `-y` but the JSON
+`attachSshArgs` omits it even while `yes:true`.
 
 ## Error and ambiguity semantics
 
@@ -122,6 +129,8 @@ represented in `attachSshArgs`; do not claim otherwise.
 - Live execution success means the tmux attach/switch process accepted the action. It does not prove
   a later Oracle action.
 - No mutation is retried after an ambiguous child/process outcome.
+- As a synchronous native route, every invocation best-effort appends the generic dispatcher audit,
+  including help and invalid argv; it records the actual `attach` or `a` spelling.
 
 ## Security boundary
 
